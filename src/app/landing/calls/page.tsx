@@ -3,7 +3,7 @@
 export default function Calls() {
   return (
     <section className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-8">
-      <div className="w-full max-w-3xl space-y-8">
+      <div className="w-full max-w-3xl space-y-8 animate-in fade-in duration-1000 ease-out">
         <div className="space-y-4 text-center">
           <h1 className="text-balance text-3xl font-normal text-foreground md:text-4xl lg:text-5xl">
             This is calls page
