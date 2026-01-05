@@ -24,25 +24,25 @@ export default function Meets() {
             className="w-full bg-blue-600 hover:bg-blue-700 sm:w-auto"
           >
             <Video className="mr-2 h-5 w-5" />
-            Новая встреча
+            New meet
           </Button>
           <div className="flex w-full items-center gap-2 sm:w-auto">
             <Input
-              placeholder="Введите код встречи или ссылку"
+              placeholder="Enter meet code or link"
               className="w-full sm:w-64"
             />
             <Button variant="ghost" className="hidden sm:inline-flex">
-              Присоединиться
+              Join
             </Button>
           </div>
         </div>
         <Button variant="ghost" className="w-full sm:hidden">
-          Присоединиться
+          Join
         </Button>
 
         <div className="text-center">
           <a href="#" className="text-sm text-blue-600 hover:underline">
-            Подробнее о Google Meet
+            About Meeting Application
           </a>
         </div>
       </div>
