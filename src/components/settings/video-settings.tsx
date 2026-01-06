@@ -1,13 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useUserSettingsContext } from "@/context/settings-context";
 
-export default function VideoSettings() {
-  const [selectedCamera, setSelectedCamera] = useState("obs-virtual");
+interface VideoSettingsProps {
+  availableCameras: MediaDeviceInfo[];
+  isLoadingDevices: boolean;
+}
+
+export default function VideoSettings({ availableCameras, isLoadingDevices }: VideoSettingsProps) {
+  const { videoSettings, setVideoSettings } = useUserSettingsContext();
+
+  const localVideoStream = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
   const [resolution, setResolution] = useState("1080p");
+
+  const handleCameraChange = useCallback(
+    (deviceId: string) => {
+      const videoMediaDeviceInfo = availableCameras.find((camera) => camera.deviceId === deviceId);
+      setVideoSettings({ camera: videoMediaDeviceInfo });
+    },
+    [availableCameras, setVideoSettings],
+  );
+
+  useEffect(() => {
+    if (availableCameras.length > 0 && !videoSettings.camera) {
+      handleCameraChange(availableCameras[0].deviceId);
+    }
+  }, [availableCameras, handleCameraChange, videoSettings.camera]);
+
+  useEffect(() => {
+    const getLocalVideoStream = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: { exact: videoSettings.camera && videoSettings.camera.deviceId },
+          },
+        });
+
+        localVideoStream.current = stream;
+
+        if (videoRef.current && stream) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getLocalVideoStream().then();
+
+    return () => {
+      if (localVideoStream.current) {
+        localVideoStream.current.getTracks().forEach((track) => track.stop());
+        localVideoStream.current = null;
+      }
+    };
+  }, [videoSettings.camera]);
 
   return (
     <div className="space-y-6">
@@ -17,14 +70,20 @@ export default function VideoSettings() {
 
       <div className="space-y-2">
         <Label htmlFor="camera">Camera</Label>
-        <Select value={selectedCamera} onValueChange={setSelectedCamera}>
+        <Select
+          value={videoSettings.camera && videoSettings.camera.deviceId}
+          onValueChange={handleCameraChange}
+          disabled={isLoadingDevices}
+        >
           <SelectTrigger id="camera">
             <SelectValue placeholder="Select camera" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="obs-virtual">OBS Virtual Camera</SelectItem>
-            <SelectItem value="integrated">Integrated Webcam</SelectItem>
-            <SelectItem value="external">External USB Camera</SelectItem>
+            {availableCameras.map((camera) => (
+              <SelectItem key={camera.deviceId} value={camera.deviceId}>
+                {camera.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -48,8 +107,7 @@ export default function VideoSettings() {
         <Label>Preview</Label>
         <div className="aspect-video bg-muted rounded-lg flex items-center justify-center border border-border">
           <div className="text-center text-muted-foreground">
-            <div className="text-sm">Camera Preview</div>
-            <div className="text-xs mt-1">Enable camera to see preview</div>
+            {videoRef && <video ref={videoRef} autoPlay playsInline muted className="w-full rounded" />}
           </div>
         </div>
       </div>

@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useUserSettingsContext } from "@/context/settings-context";
 
 export default function GeneralSettings() {
-  const [autoLeave, setAutoLeave] = useState(true);
-  const [notifications, setNotifications] = useState(false);
-  const [contactsOnly, setContactsOnly] = useState(true);
+  const { generalSettings, setGeneralSettings } = useUserSettingsContext();
 
   return (
     <div className="space-y-6">
@@ -22,7 +21,13 @@ export default function GeneralSettings() {
             Leave calls when no other participants have joined within a few minutes
           </p>
         </div>
-        <Switch checked={autoLeave} onCheckedChange={setAutoLeave} aria-label="Auto leave setting" />
+        <Switch
+          checked={generalSettings.leaveEmptyCalls}
+          onCheckedChange={(checked) => {
+            setGeneralSettings({ leaveEmptyCalls: checked });
+          }}
+          aria-label="Auto leave setting"
+        />
       </div>
 
       <div className="flex items-start justify-between gap-4">
@@ -32,7 +37,13 @@ export default function GeneralSettings() {
             Receive notifications when calls are incoming or when participants join
           </p>
         </div>
-        <Switch checked={notifications} onCheckedChange={setNotifications} aria-label="Notifications setting" />
+        <Switch
+          checked={generalSettings.desktopNotifications}
+          onCheckedChange={(checked) => {
+            setGeneralSettings({ desktopNotifications: checked });
+          }}
+          aria-label="Notifications setting"
+        />
       </div>
 
       <div className="flex items-start justify-between gap-4">
@@ -40,7 +51,13 @@ export default function GeneralSettings() {
           <Label className="font-medium">Calls only from contacts list</Label>
           <p className="text-sm text-muted-foreground">Only allow incoming calls from your saved contacts</p>
         </div>
-        <Switch checked={contactsOnly} onCheckedChange={setContactsOnly} aria-label="Contacts only setting" />
+        <Switch
+          checked={generalSettings.onlyContactsCalls}
+          onCheckedChange={(checked) => {
+            setGeneralSettings({ onlyContactsCalls: checked });
+          }}
+          aria-label="Contacts only setting"
+        />
       </div>
 
       <div className="pt-4 border-t space-y-3">

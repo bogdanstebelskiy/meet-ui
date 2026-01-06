@@ -3,8 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
-import { Mic, Video, Settings2 } from "lucide-react";
+import { Video, Settings2, Settings, Speaker } from "lucide-react";
 import { useState } from "react";
 import VideoSettings from "@/components/settings/video-settings";
 import AudioSettings from "@/components/settings/audio-settings";
@@ -13,9 +12,9 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useMediaDevices } from "@/hooks/use-media-devices";
 
 export default function SettingsDialog() {
-  const [activeTab, setActiveTab] = useState("microphone");
+  const [activeTab, setActiveTab] = useState("audio");
 
-  const { availableMicrophones, availableSpeakers, isLoadingDevices } = useMediaDevices();
+  const { availableMicrophones, availableSpeakers, availableCameras, isLoadingDevices } = useMediaDevices();
 
   return (
     <Dialog>
@@ -39,22 +38,22 @@ export default function SettingsDialog() {
           <TabsList className="flex flex-col justify-start items-start h-auto border-r w-16 sm:w-40 rounded-none px-2 py-3 sm:px-4 sm:py-4 gap-2 bg-background">
             <div>
               <TabsTrigger
-                value="microphone"
-                className="w-full h-[50px] justify-center sm:justify-start gap-2 px-2 sm:px-3 py-2 data-[state=active]:bg-background"
+                value="audio"
+                className="w-full h-[50px] justify-center sm:justify-start gap-2 px-2 sm:px-3 py-2 data-[state=active]:bg-background cursor-pointer"
               >
-                <Mic className="size-4 flex-shrink-0" />
-                <span className="hidden sm:inline text-sm">Microphone</span>
+                <Speaker className="size-4 flex-shrink-0" />
+                <span className="hidden sm:inline text-sm">Audio</span>
               </TabsTrigger>
               <TabsTrigger
                 value="video"
-                className="w-full h-[50px] justify-center sm:justify-start gap-2 px-2 sm:px-3 py-2 data-[state=active]:bg-background"
+                className="w-full h-[50px] justify-center sm:justify-start gap-2 px-2 sm:px-3 py-2 data-[state=active]:bg-background cursor-pointer"
               >
                 <Video className="size-4 flex-shrink-0" />
                 <span className="hidden sm:inline text-sm">Video</span>
               </TabsTrigger>
               <TabsTrigger
                 value="general"
-                className="w-full h-[50px] justify-center sm:justify-start gap-2 px-2 sm:px-3 py-2 data-[state=active]:bg-background"
+                className="w-full h-[50px] justify-center sm:justify-start gap-2 px-2 sm:px-3 py-2 data-[state=active]:bg-background cursor-pointer"
               >
                 <Settings2 className="size-4 flex-shrink-0" />
                 <span className="hidden sm:inline text-sm">General</span>
@@ -62,7 +61,7 @@ export default function SettingsDialog() {
             </div>
           </TabsList>
 
-          <TabsContent value="microphone" className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+          <TabsContent value="audio" className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
             <AudioSettings
               availableMicrophones={availableMicrophones}
               availableSpeakers={availableSpeakers}
@@ -71,7 +70,7 @@ export default function SettingsDialog() {
           </TabsContent>
 
           <TabsContent value="video" className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
-            <VideoSettings />
+            <VideoSettings availableCameras={availableCameras} isLoadingDevices={isLoadingDevices} />
           </TabsContent>
 
           <TabsContent value="general" className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4">

@@ -75,7 +75,7 @@ export default function AudioSettings({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold mb-4">Microphone Settings</h3>
+        <h3 className="text-lg font-semibold mb-4">Audio Settings</h3>
       </div>
 
       <div className="space-y-2">

@@ -7,7 +7,7 @@ const STORAGE_KEYS = {
   AUDIO: "userSettings_audio",
   VIDEO: "userSettings_video",
   GENERAL: "userSettings_general",
-};
+} as const;
 
 interface AudioSettings {
   microphone: MediaDeviceInfo | undefined;
