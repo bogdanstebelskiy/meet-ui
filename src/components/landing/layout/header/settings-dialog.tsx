@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
@@ -16,9 +10,12 @@ import VideoSettings from "@/components/settings/video-settings";
 import MicrophoneSettings from "@/components/settings/microphone-settings";
 import GeneralSettings from "@/components/settings/general-settings";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useMediaDevices } from "@/context/media-device-hook";
 
 export default function SettingsDialog() {
   const [activeTab, setActiveTab] = useState("microphone");
+
+  const { availableMicrophones, availableSpeakers, isLoadingDevices } = useMediaDevices();
 
   return (
     <Dialog>
@@ -65,24 +62,19 @@ export default function SettingsDialog() {
             </div>
           </TabsList>
 
-          <TabsContent
-            value="microphone"
-            className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4"
-          >
-            <MicrophoneSettings />
+          <TabsContent value="microphone" className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+            <MicrophoneSettings
+              availableMicrophones={availableMicrophones}
+              availableSpeakers={availableSpeakers}
+              isLoadingDevices={isLoadingDevices}
+            />
           </TabsContent>
 
-          <TabsContent
-            value="video"
-            className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4"
-          >
+          <TabsContent value="video" className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
             <VideoSettings />
           </TabsContent>
 
-          <TabsContent
-            value="general"
-            className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4"
-          >
+          <TabsContent value="general" className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
             <GeneralSettings />
           </TabsContent>
         </Tabs>
