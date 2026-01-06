@@ -7,21 +7,26 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useUserSettingsContext } from "@/context/settings-context";
 import { Loader2 } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
 
-interface MicrophoneSettingsProps {
+interface AudioSettingsProps {
   availableMicrophones: MediaDeviceInfo[];
   availableSpeakers: MediaDeviceInfo[];
   isLoadingDevices: boolean;
 }
 
-export default function MicrophoneSettings({
+export default function AudioSettings({
   availableMicrophones,
   availableSpeakers,
   isLoadingDevices,
-}: MicrophoneSettingsProps) {
-  const [volume, setVolume] = useState([70]);
-
+}: AudioSettingsProps) {
   const { audioSettings, setAudioSettings } = useUserSettingsContext();
+
+  const [volume, setVolume] = useState(audioSettings.volume || 70);
+
+  const debouncedSaveVolume = useDebounce((newVolume: number) => {
+    setAudioSettings({ volume: newVolume });
+  }, 300);
 
   const handleMicrophoneChange = useCallback(
     (deviceId: string) => {
@@ -37,6 +42,14 @@ export default function MicrophoneSettings({
       setAudioSettings({ speaker: speakerMediaDeviceInfo });
     },
     [availableSpeakers, setAudioSettings],
+  );
+
+  const handleVolumeChange = useCallback(
+    (newVolume: number[]) => {
+      setVolume(newVolume[0]);
+      debouncedSaveVolume(newVolume[0]);
+    },
+    [debouncedSaveVolume],
   );
 
   useEffect(() => {
@@ -108,8 +121,16 @@ export default function MicrophoneSettings({
       <div className="space-y-2">
         <Label htmlFor="volume">Volume</Label>
         <div className="flex items-center gap-4">
-          <Slider id="volume" min={0} max={100} step={1} value={volume} onValueChange={setVolume} className="flex-1" />
-          <span className="text-sm text-muted-foreground w-8 text-right">{volume[0]}%</span>
+          <Slider
+            id="volume"
+            min={0}
+            max={100}
+            step={1}
+            value={[volume]}
+            onValueChange={handleVolumeChange}
+            className="flex-1"
+          />
+          <span className="text-sm text-muted-foreground w-8 text-right">{volume}%</span>
         </div>
       </div>
 

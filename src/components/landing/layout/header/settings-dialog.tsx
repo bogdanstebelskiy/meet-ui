@@ -7,10 +7,10 @@ import { Settings } from "lucide-react";
 import { Mic, Video, Settings2 } from "lucide-react";
 import { useState } from "react";
 import VideoSettings from "@/components/settings/video-settings";
-import MicrophoneSettings from "@/components/settings/microphone-settings";
+import AudioSettings from "@/components/settings/audio-settings";
 import GeneralSettings from "@/components/settings/general-settings";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { useMediaDevices } from "@/app/hooks/use-media-devices";
+import { useMediaDevices } from "@/hooks/use-media-devices";
 
 export default function SettingsDialog() {
   const [activeTab, setActiveTab] = useState("microphone");
@@ -63,7 +63,7 @@ export default function SettingsDialog() {
           </TabsList>
 
           <TabsContent value="microphone" className="mt-0 h-96 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
-            <MicrophoneSettings
+            <AudioSettings
               availableMicrophones={availableMicrophones}
               availableSpeakers={availableSpeakers}
               isLoadingDevices={isLoadingDevices}
