@@ -10,7 +10,7 @@ import VideoSettings from "@/components/settings/video-settings";
 import MicrophoneSettings from "@/components/settings/microphone-settings";
 import GeneralSettings from "@/components/settings/general-settings";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { useMediaDevices } from "@/context/media-device-hook";
+import { useMediaDevices } from "@/app/hooks/use-media-devices";
 
 export default function SettingsDialog() {
   const [activeTab, setActiveTab] = useState("microphone");
@@ -20,7 +20,7 @@ export default function SettingsDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" aria-controls="dialog">
           <Settings className="size-6" />
         </Button>
       </DialogTrigger>

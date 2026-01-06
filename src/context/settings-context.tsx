@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, ReactNode, useState, useEffect } from "react";
-import { loadFromStorage, saveToStorage } from "@/lib/localStorage";
+import { loadFromStorage, saveToStorage } from "@/lib/local-storage";
 
 const STORAGE_KEYS = {
   AUDIO: "userSettings_audio",

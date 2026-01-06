@@ -19,6 +19,7 @@ export const useMediaDevices = () => {
         video: true,
       });
 
+      // Stop local stream tracks so that camera flashlight doesn't beam
       stream.getTracks().forEach((track) => track.stop());
 
       const devices = await navigator.mediaDevices.enumerateDevices();
