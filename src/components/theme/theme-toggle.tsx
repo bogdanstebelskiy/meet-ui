@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 export function ThemeToggle() {
   const { setTheme } = useTheme();
 
-  const toggleTheme = () =>
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  const toggleTheme = () => setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
   return (
     <div className="fixed bottom-4 right-4 z-50">

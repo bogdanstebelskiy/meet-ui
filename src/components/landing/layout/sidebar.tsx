@@ -23,10 +23,7 @@ export function MeetSidebar({ isOpen }: MeetSidebarProps) {
       )}
     >
       <nav
-        className={cn(
-          "space-y-1 p-2 transition-opacity duration-300",
-          isOpen ? "opacity-100 delay-150" : "opacity-0",
-        )}
+        className={cn("space-y-1 p-2 transition-opacity duration-300", isOpen ? "opacity-100 delay-150" : "opacity-0")}
       >
         <Link
           href="/landing/meets"

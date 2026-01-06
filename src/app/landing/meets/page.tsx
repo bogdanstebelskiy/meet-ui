@@ -13,24 +13,17 @@ export default function Meets() {
             Video calls and meet for all
           </h1>
           <p className="text-pretty text-base text-muted-foreground md:text-lg">
-            Meeting Application provides video calling for collaboration and fun
-            — no matter where you are.
+            Meeting Application provides video calling for collaboration and fun — no matter where you are.
           </p>
         </div>
 
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Button
-            size="lg"
-            className="w-full bg-blue-600 hover:bg-blue-700 sm:w-auto"
-          >
+          <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700 sm:w-auto">
             <Video className="mr-2 h-5 w-5" />
             New meet
           </Button>
           <div className="flex w-full items-center gap-2 sm:w-auto">
-            <Input
-              placeholder="Enter meet code or link"
-              className="w-full sm:w-64"
-            />
+            <Input placeholder="Enter meet code or link" className="w-full sm:w-64" />
             <Button variant="ghost" className="hidden sm:inline-flex">
               Join
             </Button>

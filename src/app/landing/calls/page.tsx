@@ -9,8 +9,7 @@ export default function Calls() {
             This is calls page
           </h1>
           <p className="text-pretty text-base text-muted-foreground md:text-lg">
-            This provides video communications for sleeping work and
-            entertainment – no matter where you were.
+            This provides video communications for sleeping work and entertainment – no matter where you were.
           </p>
         </div>
 

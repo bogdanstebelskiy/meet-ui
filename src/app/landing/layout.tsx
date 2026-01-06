@@ -4,11 +4,7 @@ import React, { useState } from "react";
 import { MeetHeader } from "@/components/landing/layout/header/header";
 import { MeetSidebar } from "@/components/landing/layout/sidebar";
 
-export default function LandingLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function LandingLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
