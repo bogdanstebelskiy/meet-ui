@@ -4,9 +4,10 @@ import { Menu, HelpCircle, MessageSquare, Grid3x3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as formatters from "@/lib/formatters";
 import Link from "next/link";
-import UserAvatar from "@/components/landing/layout/header/user-avatar";
+//import UserAvatar from "@/components/landing/layout/header/user-avatar";
 import SettingsDialog from "@/components/landing/layout/header/settings-dialog";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import UserButton from "@/components/landing/layout/header/user-button";
 
 interface MeetHeaderProps {
   onMenuClick: () => void;
@@ -26,7 +27,7 @@ export function MeetHeader({ onMenuClick }: MeetHeaderProps) {
           </div>
         </Link>
       </div>
-      <div className="flex items-center gap-8">
+      <nav className="flex items-center gap-8">
         <div>
           <span className="hidden text-md font-semibold text-muted-foreground md:inline">
             {formatters.formatDate(new Date())}
@@ -45,10 +46,11 @@ export function MeetHeader({ onMenuClick }: MeetHeaderProps) {
           </Button>
           <ThemeToggle />
         </div>
-        <div>
-          <UserAvatar />
+        <div className="flex items-center">
+          <UserButton />
+          {/*<UserAvatar />*/}
         </div>
-      </div>
+      </nav>
     </header>
   );
 }
