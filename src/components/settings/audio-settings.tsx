@@ -27,6 +27,7 @@ export default function AudioSettings({
 
   const { isTesting, isTalking, error, audioRef, toggleTest } = useMicrophoneTest(
     audioSettings.microphone && audioSettings.microphone.deviceId,
+    audioSettings.speaker && audioSettings.speaker.deviceId,
   );
 
   const debouncedSaveVolume = useDebounce((newVolume: number) => {

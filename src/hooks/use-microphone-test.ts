@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-export const useMicrophoneTest = (deviceId?: string) => {
+export const useMicrophoneTest = (microphoneDeviceId?: string, speakerDeviceId?: string) => {
   const [isTesting, setIsTesting] = useState(false);
   const [isTalking, setIsTalking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,11 +35,25 @@ export const useMicrophoneTest = (deviceId?: string) => {
     checkVolume();
   };
 
+  const setAudioOutputDevice = async (deviceId: string) => {
+    try {
+      if (!audioRef.current || !(typeof audioRef.current.setSinkId === "function")) {
+        console.warn("setSinkId not supported in this browser");
+        return;
+      }
+
+      await audioRef.current.setSinkId(deviceId);
+    } catch (err) {
+      console.error("Error setting output device: ", err);
+      setError(err instanceof Error ? err.message : "Failed to set output device");
+    }
+  };
+
   const startTest = async () => {
     try {
       setError(null);
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: microphoneDeviceId } } });
       mediaStreamRef.current = stream;
 
       audioContextRef.current = new window.AudioContext();
@@ -51,6 +65,11 @@ export const useMicrophoneTest = (deviceId?: string) => {
 
       if (audioRef.current) {
         audioRef.current.srcObject = stream;
+
+        if (speakerDeviceId) {
+          await setAudioOutputDevice(speakerDeviceId);
+        }
+
         await audioRef.current.play();
       }
 
@@ -93,6 +112,16 @@ export const useMicrophoneTest = (deviceId?: string) => {
 
     await startTest();
   };
+
+  useEffect(() => {
+    const run = async () => {
+      if (speakerDeviceId && isTesting) {
+        await setAudioOutputDevice(speakerDeviceId);
+      }
+    };
+
+    run().then();
+  }, [speakerDeviceId, isTesting]);
 
   useEffect(() => {
     return () => {
