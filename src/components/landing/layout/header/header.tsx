@@ -14,7 +14,7 @@ interface MeetHeaderProps {
 
 export function MeetHeader({ onMenuClick }: MeetHeaderProps) {
   return (
-    <header className="flex h-16 items-center justify-between px-4 border-b">
+    <header className="flex h-16 items-center justify-between px-4">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onMenuClick} className="md:inline-flex">
           <Menu className="size-5" />

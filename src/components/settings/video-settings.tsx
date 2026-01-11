@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { useUserSettingsContext } from "@/context/settings-context";
 
 interface VideoSettingsProps {
@@ -110,12 +109,6 @@ export default function VideoSettings({ availableCameras, isLoadingDevices }: Vi
             {videoRef && <video ref={videoRef} autoPlay playsInline muted className="w-full rounded" />}
           </div>
         </div>
-      </div>
-
-      <div className="pt-4">
-        <Button variant="outline" className="w-full sm:w-auto bg-transparent">
-          Test Camera
-        </Button>
       </div>
     </div>
   );

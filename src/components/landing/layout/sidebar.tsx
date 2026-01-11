@@ -18,7 +18,7 @@ export function MeetSidebar({ isOpen }: MeetSidebarProps) {
   return (
     <aside
       className={cn(
-        "border-r border-border bg-background transition-all duration-300 ease-in-out overflow-hidden",
+        "bg-background transition-all duration-300 ease-in-out overflow-hidden",
         isOpen ? "md:w-64 opacity-100" : "w-0 opacity-0",
       )}
     >

@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useUserSettingsContext } from "@/context/settings-context";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mic, MicOff } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useMicrophoneTest } from "@/hooks/use-microphone-test";
 
 interface AudioSettingsProps {
   availableMicrophones: MediaDeviceInfo[];
@@ -23,6 +24,10 @@ export default function AudioSettings({
   const { audioSettings, setAudioSettings } = useUserSettingsContext();
 
   const [volume, setVolume] = useState(audioSettings.volume || 70);
+
+  const { isTesting, isTalking, error, audioRef, toggleTest } = useMicrophoneTest(
+    audioSettings.microphone && audioSettings.microphone.deviceId,
+  );
 
   const debouncedSaveVolume = useDebounce((newVolume: number) => {
     setAudioSettings({ volume: newVolume });
@@ -134,10 +139,35 @@ export default function AudioSettings({
         </div>
       </div>
 
-      <div className="pt-4">
-        <Button variant="outline" className="w-full sm:w-auto bg-transparent">
-          Test Microphone
+      <div className="flex gap-4 pt-4">
+        <Button
+          onClick={toggleTest}
+          variant="outline"
+          className="w-full sm:w-auto bg-transparent flex items-center gap-2"
+        >
+          {isTesting ? (
+            <>
+              <MicOff className="w-4 h-4" />
+              Stop Test
+            </>
+          ) : (
+            <>
+              <Mic className="w-4 h-4" />
+              Test Microphone
+            </>
+          )}
         </Button>
+
+        {error && <p className="mt-2 text-sm text-red-500">Error: {error}</p>}
+
+        {isTesting && (
+          <div className="flex items-center gap-2 text-sm">
+            <div className={`w-3 h-3 rounded-full ${isTalking ? "bg-green-500 animate-pulse" : "bg-gray-400"}`} />
+            <span>{isTalking ? "Detecting voice..." : "Speak to test"}</span>
+          </div>
+        )}
+
+        <audio ref={audioRef} className="hidden"></audio>
       </div>
     </div>
   );

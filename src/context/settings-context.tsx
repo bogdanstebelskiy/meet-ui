@@ -59,13 +59,13 @@ export const loadAudioSettingsFromStorage = () =>
   });
 
 export const loadVideoSettingsFromStorage = () =>
-  loadFromStorage(STORAGE_KEYS.VIDEO, {
+  loadFromStorage<VideoSettings>(STORAGE_KEYS.VIDEO, {
     camera: undefined,
     resolution: "720p",
   });
 
 export const loadGeneralSettingsFromStorage = () =>
-  loadFromStorage(STORAGE_KEYS.GENERAL, {
+  loadFromStorage<GeneralSettings>(STORAGE_KEYS.GENERAL, {
     leaveEmptyCalls: false,
     desktopNotifications: true,
     onlyContactsCalls: false,
