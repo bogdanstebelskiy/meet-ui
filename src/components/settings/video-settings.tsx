@@ -13,8 +13,8 @@ interface VideoSettingsProps {
 export default function VideoSettings({ availableCameras, isLoadingDevices }: VideoSettingsProps) {
   const { videoSettings, setVideoSettings } = useUserSettingsContext();
 
-  const localVideoStream = useRef<MediaStream | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const localVideoStream = useRef<MediaStream>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const [resolution, setResolution] = useState("1080p");
 

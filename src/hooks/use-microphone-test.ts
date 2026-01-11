@@ -39,8 +39,7 @@ export const useMicrophoneTest = (deviceId?: string) => {
     try {
       setError(null);
 
-      const constraints = deviceId ? { audio: { deviceId: { exact: deviceId } } } : { audio: true };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } });
       mediaStreamRef.current = stream;
 
       audioContextRef.current = new window.AudioContext();
