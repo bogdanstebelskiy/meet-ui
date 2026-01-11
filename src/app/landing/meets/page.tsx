@@ -1,8 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Video } from "lucide-react";
+import { Video, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import CreateMeetingDialog from "@/components/landing/create-meeting-dialog";
 
 export default function Meets() {
   return (
@@ -18,10 +20,23 @@ export default function Meets() {
         </div>
 
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700 sm:w-auto">
-            <Video className="mr-2 h-5 w-5" />
-            New meet
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild aria-controls="popover">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                <Video className="mr-2 h-5 w-5" />
+                New meet
+              </Button>
+            </PopoverTrigger>
+
+            <PopoverContent className="px-0 py-2">
+              <CreateMeetingDialog />
+
+              <Button variant="ghost" size="lg" className="flex justify-start w-full rounded-none">
+                <Plus className="h-5 w-5" />
+                Start instant meeting
+              </Button>
+            </PopoverContent>
+          </Popover>
           <div className="flex w-full items-center gap-2 sm:w-auto">
             <Input placeholder="Enter meet code or link" className="w-full sm:w-64" />
             <Button variant="ghost" className="hidden sm:inline-flex">
