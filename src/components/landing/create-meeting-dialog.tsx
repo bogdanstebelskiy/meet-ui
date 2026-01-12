@@ -44,7 +44,7 @@ export default function CreateMeetingDialog() {
           </p>
 
           <div className="flex items-center justify-between rounded-lg bg-muted/50 border text-lg font-medium py-2 px-3">
-            <span className="leading-none">{link}</span>
+            <span>{link}</span>
             <Button variant="ghost" onClick={copyToClipboard}>
               <Copy className="h-5 w-5" />
             </Button>
