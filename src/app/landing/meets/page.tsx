@@ -5,8 +5,21 @@ import { Video, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import CreateMeetingDialog from "@/components/landing/create-meeting-dialog";
+import { useState } from "react";
+import { redirect } from "next/navigation";
+import { config } from "@/config";
 
 export default function Meets() {
+  const [joinCode, setJoinCode] = useState("");
+
+  const handleJoinRoom = () => {
+    if (joinCode.includes(config.BASE_URL)) {
+      redirect(`/${joinCode.split("/").pop()}`);
+    }
+
+    redirect(`/${joinCode}`);
+  };
+
   return (
     <section className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-8">
       <div className="w-full max-w-3xl space-y-8 animate-in fade-in duration-1500 ease-out">
@@ -38,8 +51,13 @@ export default function Meets() {
             </PopoverContent>
           </Popover>
           <div className="flex w-full items-center gap-2 sm:w-auto">
-            <Input placeholder="Enter meet code or link" className="w-full sm:w-64" />
-            <Button variant="ghost" className="hidden sm:inline-flex">
+            <Input
+              onChange={(e) => setJoinCode(e.target.value)}
+              value={joinCode}
+              placeholder="Enter meet code or link"
+              className="w-full sm:w-64"
+            />
+            <Button onClick={handleJoinRoom} variant="ghost" className="hidden sm:inline-flex">
               Join
             </Button>
           </div>

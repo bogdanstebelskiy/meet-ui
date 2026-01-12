@@ -4,23 +4,19 @@ import { Copy, Link, X } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useState } from "react";
 import { toast } from "sonner";
-
-const generateMeetCode = () => {
-  const letters = "abcdefghijklmnopqrstuvwxyz";
-  const part = (n: number) =>
-    Array.from({ length: n }, () => letters[Math.floor(Math.random() * letters.length)]).join("");
-  return `${part(3)}-${part(3)}-${part(3)}`;
-};
+import { generateMeetCode } from "@/lib/generators";
+import { config } from "@/config";
 
 export default function CreateMeetingDialog() {
   const [code] = useState(generateMeetCode());
-  const link = `meet.google.com/${code}`;
+  const link = `${config.BASE_URL}/${code}`;
 
   const copyToClipboard = async () => {
-    await navigator.clipboard.writeText(`https://${link}`);
+    await navigator.clipboard.writeText(link);
 
     toast("Copied to clipboard", {
-      closeButton: true,
+      position: "bottom-left",
+      id: "clipboard-toast",
     });
   };
 
@@ -47,7 +43,7 @@ export default function CreateMeetingDialog() {
             Send this information to participants you want to invite. Copy if you are planning meeting later.
           </p>
 
-          <div className="flex items-center justify-between rounded-lg bg-muted text-lg font-medium py-2 px-3">
+          <div className="flex items-center justify-between rounded-lg bg-muted/50 border text-lg font-medium py-2 px-3">
             <span className="leading-none">{link}</span>
             <Button variant="ghost" onClick={copyToClipboard}>
               <Copy className="h-5 w-5" />
