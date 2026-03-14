@@ -1,15 +1,18 @@
+"use client";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Copy, Link, X } from "lucide-react";
+import { Copy, Link } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useState } from "react";
 import { toast } from "sonner";
 import { generateMeetCode } from "@/lib/generators";
-import { config } from "@/config";
+import { clientConfig } from "@/config/client";
+import { useMeeting } from "@/hooks/use-meeting";
 
 export default function CreateMeetingDialog() {
   const [code] = useState(generateMeetCode());
-  const link = `${config.BASE_URL}/${code}`;
+  const link = `${clientConfig.NEXT_PUBLIC_BASE_URL}/room/${code}`;
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(link);
@@ -20,10 +23,17 @@ export default function CreateMeetingDialog() {
     });
   };
 
+  const { createMeeting } = useMeeting();
+
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="lg" className="flex justify-start w-full rounded-none">
+        <Button
+          onClick={() => createMeeting(code)}
+          variant="ghost"
+          size="lg"
+          className="flex justify-start w-full rounded-none"
+        >
           <Link className="h-5 w-5" />
           Create meeting
         </Button>

@@ -7,14 +7,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import CreateMeetingDialog from "@/components/landing/create-meeting-dialog";
 import { useState } from "react";
 import { redirect } from "next/navigation";
-import { config } from "@/config";
+import { clientConfig } from "@/config/client";
 import { z } from "zod";
 
 const joinCodeSchema = z
   .string()
   .min(1, "Meeting code cannot be empty")
   .refine((value) => {
-    const code = value.replace(config.BASE_URL, "").replace(/^\/+/, "");
+    const code = value.replace(clientConfig.NEXT_PUBLIC_BASE_URL, "").replace(/^\/+/, "");
     return /^[a-zA-Z0-9-]+$/.test(code);
   }, "Can't use this symbol here.");
 
@@ -23,7 +23,7 @@ export default function Meets() {
   const [error, setError] = useState("");
 
   const extractCode = (value: string) => {
-    return value.replace(config.BASE_URL, "").replace(/^\/+/, "");
+    return value.replace(clientConfig.NEXT_PUBLIC_BASE_URL, "").replace(/^\/+/, "");
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,7 +39,7 @@ export default function Meets() {
     setError(result.success ? "" : result.error.issues[0].message);
   };
 
-  const handleJoinRoom = () => {
+  const handleJoinRoom = async () => {
     const result = joinCodeSchema.safeParse(joinCode);
 
     if (!result.success) {
@@ -48,7 +48,8 @@ export default function Meets() {
     }
 
     const code = extractCode(joinCode);
-    redirect(`/${code}`);
+
+    redirect(`/room/${code}`);
   };
 
   const isJoinDisabled = !joinCode || !!error;

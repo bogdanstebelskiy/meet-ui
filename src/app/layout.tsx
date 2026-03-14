@@ -6,6 +6,7 @@ import { UserSettingsContextProvider } from "@/context/settings-context";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { shadcn } from "@clerk/themes";
+import StreamClientProvider from "@/providers/StreamClientProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
