@@ -12,7 +12,7 @@ import { useMeeting } from "@/hooks/use-meeting";
 
 export default function CreateMeetingDialog() {
   const [code] = useState(generateMeetCode());
-  const link = `${clientConfig.NEXT_PUBLIC_BASE_URL}/room/${code}`;
+  const link = `${clientConfig.NEXT_PUBLIC_BASE_URL}/meeting/${code}`;
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(link);

@@ -11,7 +11,7 @@ export default function RoomPage() {
   const extractCode = (value: string) => {
     return value
       .replace(clientConfig.NEXT_PUBLIC_BASE_URL, "")
-      .replace(/^\/?room\//, "")
+      .replace(/^\/?meeting\//, "")
       .replace(/^\/+/, "");
   };
 

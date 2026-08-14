@@ -49,7 +49,7 @@ export default function Meets() {
 
     const code = extractCode(joinCode);
 
-    redirect(`/room/${code}`);
+    redirect(`/meeting/${code}`);
   };
 
   const isJoinDisabled = !joinCode || !!error;
