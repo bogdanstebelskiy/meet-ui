@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
 import "./globals.css";
+
 import { ThemeProvider } from "next-themes";
 import { UserSettingsContextProvider } from "@/context/settings-context";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { shadcn } from "@clerk/themes";
-import StreamClientProvider from "@/providers/StreamClientProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

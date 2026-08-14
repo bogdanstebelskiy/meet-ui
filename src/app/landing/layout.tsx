@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { MeetHeader } from "@/components/landing/layout/header/header";
 import { MeetSidebar } from "@/components/landing/layout/sidebar";
-import StreamClientProvider from "@/providers/StreamClientProvider";
 
 export default function LandingLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -13,9 +12,7 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
       <MeetHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       <div className="flex flex-1 overflow-hidden">
         <MeetSidebar isOpen={sidebarOpen} />
-        <main className="flex-1 overflow-auto">
-          <StreamClientProvider>{children}</StreamClientProvider>
-        </main>
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );
