@@ -8,7 +8,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { generateMeetCode } from "@/lib/generators";
 import { clientConfig } from "@/config/client";
-import { useMeeting } from "@/hooks/use-meeting";
 
 export default function CreateMeetingDialog() {
   const [code] = useState(generateMeetCode());
@@ -23,17 +22,10 @@ export default function CreateMeetingDialog() {
     });
   };
 
-  const { createMeeting } = useMeeting();
-
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          onClick={() => createMeeting(code)}
-          variant="ghost"
-          size="lg"
-          className="flex justify-start w-full rounded-none"
-        >
+        <Button variant="ghost" size="lg" className="flex justify-start w-full rounded-none">
           <Link className="h-5 w-5" />
           Create meeting
         </Button>

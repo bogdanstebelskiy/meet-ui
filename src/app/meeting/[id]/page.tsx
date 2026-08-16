@@ -1,37 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
-import { useMeeting } from "@/hooks/use-meeting";
-import { clientConfig } from "@/config/client";
+import { useParams } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
+import { useState } from "react";
 import Loader from "@/components/loader";
+import { MeetingRoomProvider } from "@/providers/meeting-room-provider";
+import MeetingSetup from "@/components/meeting/MeetingSetup";
+import MeetingRoom from "@/components/meeting/MeetingRoom";
 
-export default function RoomPage() {
-  const { isLoading, error, joinMeeting } = useMeeting();
+export default function MeetingPage() {
+  const params = useParams<{ id: string }>();
+  const { user, isLoaded } = useUser();
+  const [isSetupComplete, setIsSetupComplete] = useState(false);
 
-  const extractCode = (value: string) => {
-    return value
-      .replace(clientConfig.NEXT_PUBLIC_BASE_URL, "")
-      .replace(/^\/?meeting\//, "")
-      .replace(/^\/+/, "");
-  };
-
-  useEffect(() => {
-    const url = window.location.href;
-    const code = extractCode(url);
-
-    joinMeeting(code).then();
-
-    // We can ignore this warning because we only want to join the meeting once when the component mounts
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (isLoading) {
+  if (!isLoaded) {
     return <Loader />;
   }
 
-  if (error) {
-    return <h1>Error</h1>;
-  }
+  const displayName =
+    user?.username || user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split("@")[0] || "Anonymous";
 
-  return <div className="flex items-center justify-center h-screen">Room Page</div>;
+  return (
+    <div className="h-screen w-full">
+      <MeetingRoomProvider roomId={params.id} displayName={displayName}>
+        {isSetupComplete ? <MeetingRoom /> : <MeetingSetup onSetupComplete={() => setIsSetupComplete(true)} />}
+      </MeetingRoomProvider>
+    </div>
+  );
 }
