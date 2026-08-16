@@ -213,6 +213,7 @@ export class RoomClient {
         producerId: string;
         kind: ConsumerKind;
         rtpParameters: mediasoupTypes.RtpParameters;
+        producerPaused: boolean;
       }>("consume", { producerId: payload.producerId, rtpCapabilities: this.device.recvRtpCapabilities });
 
       const consumer = await this.recvTransport.consume({
@@ -226,6 +227,10 @@ export class RoomClient {
       await this.request("resumeConsumer", { consumerId: consumer.id });
 
       this.handlers.onRemoteTrack({ peerId: payload.peerId, kind: payload.kind, track: consumer.track });
+
+      if (data.producerPaused) {
+        this.handlers.onRemoteProducerPaused(payload.peerId, payload.kind);
+      }
     } catch (error) {
       // Usually the peer already left mid-consume; peerClosed cleans up the
       // tile regardless, so this is logged, not surfaced as a user error.

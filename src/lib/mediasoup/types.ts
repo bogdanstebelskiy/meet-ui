@@ -68,6 +68,7 @@ export interface ClientToServerEvents {
       producerId: string;
       kind: ConsumerKind;
       rtpParameters: mediasoupTypes.RtpParameters;
+      producerPaused: boolean;
     }) => void,
   ) => void;
   resumeConsumer: (p: { consumerId: string }, ack: (r: { resumed: true }) => void) => void;
