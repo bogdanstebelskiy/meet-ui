@@ -5,8 +5,8 @@ import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import Loader from "@/components/loader";
 import { MeetingRoomProvider } from "@/providers/meeting-room-provider";
-import MeetingSetup from "@/components/meeting/MeetingSetup";
-import MeetingRoom from "@/components/meeting/MeetingRoom";
+import MeetingSetup from "@/components/meeting/meeting-setup";
+import MeetingRoom from "@/components/meeting/meeting-room";
 
 export default function MeetingPage() {
   const params = useParams<{ id: string }>();
