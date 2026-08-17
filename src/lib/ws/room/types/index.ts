@@ -2,9 +2,9 @@ import { types as mediasoupTypes } from "mediasoup-client";
 
 export type ConsumerKind = mediasoupTypes.MediaKind;
 
-export type ConnectionState = "connecting" | "connected" | "disconnected" | "error";
-
 export type TransportDirection = "send" | "recv";
+
+export type ConnectionState = "connecting" | "connected" | "disconnected" | "error";
 
 export interface PeerInfo {
   id: string;
@@ -35,7 +35,7 @@ export interface ExistingProducerPayload extends ProducerRef {
   kind: ConsumerKind;
 }
 
-export interface ServerToClientEvents {
+export interface RoomServerToClientEvents {
   newPeer: (peer: PeerInfo) => void;
   newProducer: (payload: ExistingProducerPayload) => void;
   peerClosed: (payload: { peerId: string }) => void;
@@ -43,7 +43,7 @@ export interface ServerToClientEvents {
   producerResumed: (payload: ProducerRef) => void;
 }
 
-export interface ClientToServerEvents {
+export interface RoomClientToServerEvents {
   join: (
     p: { roomId: string; displayName: string },
     ack: (r: { peerId: string; existingPeers: PeerInfo[] }) => void,

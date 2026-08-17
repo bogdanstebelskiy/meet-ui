@@ -1,7 +1,17 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { RoomClient, type ConnectionState, type ConsumerKind, type PeerInfo } from "@/lib/mediasoup/room-client";
+import { RoomClient } from "@/lib/ws/room/client";
+import { ChatClient } from "@/lib/ws/chat/client";
+import { SignalingSocket } from "@/lib/ws/signaling-socket";
+import type {
+  ConnectionState,
+  ConsumerKind,
+  PeerInfo,
+  RoomClientToServerEvents,
+  RoomServerToClientEvents,
+} from "@/lib/ws/room/types";
+import type { ChatClientToServerEvents, ChatMessage, ChatServerToClientEvents } from "@/lib/ws/chat/types";
 import { clientConfig } from "@/config/client";
 
 interface PeerState {
@@ -22,10 +32,12 @@ interface MeetingRoomContextValue {
   isMicOn: boolean;
   isCamOn: boolean;
   peers: PeerState[];
+  messages: ChatMessage[];
   join: () => Promise<void>;
   leave: () => void;
   toggleMic: () => void;
   toggleCam: () => void;
+  sendMessage: (body: string) => Promise<void>;
 }
 
 const MeetingRoomContext = createContext<MeetingRoomContextValue | undefined>(undefined);
@@ -53,8 +65,10 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
   const [isMicOn, setIsMicOn] = useState(true);
   const [isCamOn, setIsCamOn] = useState(true);
   const [peersById, setPeersById] = useState<Record<string, PeerState>>({});
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const clientRef = useRef<RoomClient | null>(null);
+  const chatClientRef = useRef<ChatClient | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
@@ -76,6 +90,7 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
       cancelled = true;
       clientRef.current?.close();
       clientRef.current = null;
+      chatClientRef.current = null;
       localStreamRef.current?.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
     };
@@ -100,7 +115,17 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
 
     setError(null);
 
-    const client = new RoomClient(clientConfig.NEXT_PUBLIC_SIGNALING_URL, roomId, displayName, {
+    const signalingSocket = new SignalingSocket<
+      RoomServerToClientEvents & ChatServerToClientEvents,
+      RoomClientToServerEvents & ChatClientToServerEvents
+    >(clientConfig.NEXT_PUBLIC_SIGNALING_URL);
+
+    const chatClient = new ChatClient(signalingSocket, roomId, {
+      onMessage: (message) => setMessages((prev) => [...prev, message]),
+    });
+    chatClientRef.current = chatClient;
+
+    const client = new RoomClient(signalingSocket, roomId, displayName, {
       onPeerJoined: (peer: PeerInfo) => upsertPeer(peer.id, { displayName: peer.displayName }),
       onPeerLeft: (peerId) => {
         setPeersById((prev) => {
@@ -136,18 +161,28 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
       }
 
       existingPeers.forEach((peer) => upsertPeer(peer.id, { displayName: peer.displayName }));
+
+      const history = await chatClient.loadHistory();
+      setMessages(history);
     } catch (err) {
       clientRef.current = null;
+      chatClientRef.current = null;
       setError(err instanceof Error ? err.message : "Failed to join meeting");
     }
+  };
+
+  const sendMessage = async (body: string) => {
+    await chatClientRef.current?.send(body);
   };
 
   const leave = () => {
     clientRef.current?.close();
     clientRef.current = null;
+    chatClientRef.current = null;
     localStreamRef.current?.getTracks().forEach((track) => track.stop());
     localStreamRef.current = null;
     setLocalStream(null);
+    setMessages([]);
     setPeersById({});
     setStatus("idle");
   };
@@ -183,10 +218,12 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
         isMicOn,
         isCamOn,
         peers: Object.values(peersById),
+        messages,
         join,
         leave,
         toggleMic,
         toggleCam,
+        sendMessage,
       }}
     >
       {children}

@@ -1,20 +1,15 @@
-import { io, Socket } from "socket.io-client";
 import { Device, types as mediasoupTypes } from "mediasoup-client";
+import { SignalingSocket } from "../signaling-socket";
 import type {
-  ClientToServerEvents,
   ConsumerKind,
   ExistingProducerPayload,
   PeerInfo,
   RoomClientHandlers,
-  ServerToClientEvents,
+  RoomClientToServerEvents,
+  RoomServerToClientEvents,
 } from "./types";
 
-export type { ConnectionState, ConsumerKind, PeerInfo, RemoteTrackInfo, RoomClientHandlers } from "./types";
-
-const REQUEST_TIMEOUT_MS = 10_000;
-
 export class RoomClient {
-  private readonly socket: Socket<ServerToClientEvents, ClientToServerEvents>;
   private readonly device = new Device();
   private sendTransport?: mediasoupTypes.Transport;
   private recvTransport?: mediasoupTypes.Transport;
@@ -27,18 +22,18 @@ export class RoomClient {
   private closed = false;
 
   constructor(
-    url: string,
+    private readonly signalingSocket: SignalingSocket<RoomServerToClientEvents, RoomClientToServerEvents>,
     private readonly roomId: string,
     private readonly displayName: string,
     private readonly handlers: RoomClientHandlers,
   ) {
-    this.socket = io(url, { autoConnect: false, transports: ["websocket"] });
+    const socket = this.signalingSocket.raw;
 
-    this.socket.on("newPeer", (peer) => this.handlers.onPeerJoined(peer));
-    this.socket.on("peerClosed", ({ peerId }) => this.handlePeerClosed(peerId));
-    this.socket.on("newProducer", (payload) => void this.handleNewProducer(payload));
+    socket.on("newPeer", (peer) => this.handlers.onPeerJoined(peer));
+    socket.on("peerClosed", ({ peerId }) => this.handlePeerClosed(peerId));
+    socket.on("newProducer", (payload) => void this.handleNewProducer(payload));
 
-    this.socket.on("producerPaused", ({ peerId, producerId }) => {
+    socket.on("producerPaused", ({ peerId, producerId }) => {
       const kind = this.consumers.get(producerId)?.consumer.kind as ConsumerKind | undefined;
 
       if (kind) {
@@ -46,7 +41,7 @@ export class RoomClient {
       }
     });
 
-    this.socket.on("producerResumed", ({ peerId, producerId }) => {
+    socket.on("producerResumed", ({ peerId, producerId }) => {
       const kind = this.consumers.get(producerId)?.consumer.kind as ConsumerKind | undefined;
 
       if (kind) {
@@ -54,36 +49,28 @@ export class RoomClient {
       }
     });
 
-    this.socket.on("disconnect", () => {
+    socket.on("disconnect", () => {
       if (!this.closed) {
         this.handlers.onConnectionStateChange("disconnected");
       }
     });
 
-    this.socket.on("connect_error", () => this.handlers.onConnectionStateChange("error"));
-  }
-
-  private request<T>(event: keyof ClientToServerEvents, payload?: unknown): Promise<T> {
-    // emitWithAck can't type-check a generic dispatcher - call sites keep it honest instead.
-    return (this.socket.timeout(REQUEST_TIMEOUT_MS).emitWithAck as (...args: unknown[]) => Promise<T>)(event, payload);
+    socket.on("connect_error", () => this.handlers.onConnectionStateChange("error"));
   }
 
   async join(tracks: { audio?: MediaStreamTrack; video?: MediaStreamTrack }): Promise<PeerInfo[]> {
     this.handlers.onConnectionStateChange("connecting");
 
-    await new Promise<void>((resolve, reject) => {
-      this.socket.once("connect", () => resolve());
-      this.socket.once("connect_error", reject);
-      this.socket.connect();
-    });
+    await this.signalingSocket.connect();
 
     // Must run first - later calls rely on roomId/peerId this sets server-side.
-    const { existingPeers } = await this.request<{ peerId: string; existingPeers: PeerInfo[] }>("join", {
-      roomId: this.roomId,
-      displayName: this.displayName,
-    });
+    const { existingPeers } = await this.signalingSocket.request<{ peerId: string; existingPeers: PeerInfo[] }>(
+      "join",
+      { roomId: this.roomId, displayName: this.displayName },
+    );
 
-    const routerRtpCapabilities = await this.request<mediasoupTypes.RtpCapabilities>("getRouterRtpCapabilities");
+    const routerRtpCapabilities =
+      await this.signalingSocket.request<mediasoupTypes.RtpCapabilities>("getRouterRtpCapabilities");
     await this.device.load({ routerRtpCapabilities });
 
     await this.createSendTransport();
@@ -114,7 +101,7 @@ export class RoomClient {
     }
 
     producer.pause();
-    await this.request("pauseProducer", { producerId: producer.id });
+    await this.signalingSocket.request("pauseProducer", { producerId: producer.id });
   }
 
   async resumeProducer(kind: ConsumerKind): Promise<void> {
@@ -124,7 +111,7 @@ export class RoomClient {
     }
 
     producer.resume();
-    await this.request("resumeProducer", { producerId: producer.id });
+    await this.signalingSocket.request("resumeProducer", { producerId: producer.id });
   }
 
   close(): void {
@@ -137,7 +124,7 @@ export class RoomClient {
     this.consumers.forEach(({ consumer }) => this.safeClose(consumer, `consumer ${consumer.id}`));
     this.safeClose(this.sendTransport, "sendTransport");
     this.safeClose(this.recvTransport, "recvTransport");
-    this.socket.disconnect();
+    this.signalingSocket.raw.disconnect();
   }
 
   private safeClose(closeable: { close(): void } | undefined, label: string): void {
@@ -153,7 +140,9 @@ export class RoomClient {
   }
 
   private async createSendTransport() {
-    const params = await this.request<mediasoupTypes.TransportOptions>("createWebRtcTransport", { direction: "send" });
+    const params = await this.signalingSocket.request<mediasoupTypes.TransportOptions>("createWebRtcTransport", {
+      direction: "send",
+    });
     const transport = this.device.createSendTransport({
       ...params,
       dtlsParameters: { ...params.dtlsParameters, role: "auto" },
@@ -161,13 +150,15 @@ export class RoomClient {
     });
 
     transport.on("connect", ({ dtlsParameters }, callback, errback) => {
-      this.request("connectWebRtcTransport", { transportId: transport.id, dtlsParameters })
+      this.signalingSocket
+        .request("connectWebRtcTransport", { transportId: transport.id, dtlsParameters })
         .then(() => callback())
         .catch(errback);
     });
 
     transport.on("produce", ({ kind, rtpParameters }, callback, errback) => {
-      this.request<{ id: string }>("produce", { transportId: transport.id, kind, rtpParameters })
+      this.signalingSocket
+        .request<{ id: string }>("produce", { transportId: transport.id, kind, rtpParameters })
         .then(({ id }) => callback({ id }))
         .catch(errback);
     });
@@ -176,7 +167,9 @@ export class RoomClient {
   }
 
   private async createRecvTransport() {
-    const params = await this.request<mediasoupTypes.TransportOptions>("createWebRtcTransport", { direction: "recv" });
+    const params = await this.signalingSocket.request<mediasoupTypes.TransportOptions>("createWebRtcTransport", {
+      direction: "recv",
+    });
     const transport = this.device.createRecvTransport({
       ...params,
       dtlsParameters: { ...params.dtlsParameters, role: "auto" },
@@ -184,7 +177,8 @@ export class RoomClient {
     });
 
     transport.on("connect", ({ dtlsParameters }, callback, errback) => {
-      this.request("connectWebRtcTransport", { transportId: transport.id, dtlsParameters })
+      this.signalingSocket
+        .request("connectWebRtcTransport", { transportId: transport.id, dtlsParameters })
         .then(() => callback())
         .catch(errback);
     });
@@ -208,7 +202,7 @@ export class RoomClient {
     }
 
     try {
-      const data = await this.request<{
+      const data = await this.signalingSocket.request<{
         id: string;
         producerId: string;
         kind: ConsumerKind;
@@ -224,7 +218,7 @@ export class RoomClient {
       });
       this.consumers.set(payload.producerId, { consumer, peerId: payload.peerId });
 
-      await this.request("resumeConsumer", { consumerId: consumer.id });
+      await this.signalingSocket.request("resumeConsumer", { consumerId: consumer.id });
 
       this.handlers.onRemoteTrack({ peerId: payload.peerId, kind: payload.kind, track: consumer.track });
 
