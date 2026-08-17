@@ -10,9 +10,10 @@ export class ChatClient {
     this.signalingSocket.raw.on("chatMessage", (message) => this.handlers.onMessage(message));
   }
 
-  async loadHistory(): Promise<ChatMessage[]> {
+  async loadHistory(afterId?: string): Promise<ChatMessage[]> {
     const { messages } = await this.signalingSocket.request<{ messages: ChatMessage[] }>("getChatHistory", {
       roomId: this.roomId,
+      afterId,
     });
     return messages;
   }

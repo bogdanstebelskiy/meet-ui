@@ -70,6 +70,18 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
   const clientRef = useRef<RoomClient | null>(null);
   const chatClientRef = useRef<ChatClient | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const isMicOnRef = useRef(true);
+  const isCamOnRef = useRef(true);
+  const lastMessageIdRef = useRef<string | undefined>(undefined);
+
+  const teardownConnection = () => {
+    clientRef.current?.close();
+    clientRef.current = null;
+    chatClientRef.current = null;
+    localStreamRef.current?.getTracks().forEach((track) => track.stop());
+    localStreamRef.current = null;
+    lastMessageIdRef.current = undefined;
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -88,11 +100,7 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
 
     return () => {
       cancelled = true;
-      clientRef.current?.close();
-      clientRef.current = null;
-      chatClientRef.current = null;
-      localStreamRef.current?.getTracks().forEach((track) => track.stop());
-      localStreamRef.current = null;
+      teardownConnection();
     };
   }, []);
 
@@ -108,6 +116,25 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
     }));
   };
 
+  // Replaces the whole peer list - used on rejoin, since old peer state (tracks,
+  // mute flags) is no longer valid once transports/consumers were torn down.
+  const resetPeers = (peers: PeerInfo[]) => {
+    const next: Record<string, PeerState> = {};
+    peers.forEach((peer) => {
+      next[peer.id] = { peerId: peer.id, displayName: peer.displayName };
+    });
+    setPeersById(next);
+  };
+
+  const applyMuteState = async (client: RoomClient) => {
+    if (!isMicOnRef.current) {
+      await client.pauseProducer("audio");
+    }
+    if (!isCamOnRef.current) {
+      await client.pauseProducer("video");
+    }
+  };
+
   const join = async () => {
     if (clientRef.current || !localStreamRef.current) {
       return;
@@ -121,9 +148,34 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
     >(clientConfig.NEXT_PUBLIC_SIGNALING_URL);
 
     const chatClient = new ChatClient(signalingSocket, roomId, {
-      onMessage: (message) => setMessages((prev) => [...prev, message]),
+      onMessage: (message) => {
+        lastMessageIdRef.current = message.id;
+        setMessages((prev) => [...prev, message]);
+      },
     });
     chatClientRef.current = chatClient;
+
+    // Fetches only messages sent while disconnected and merges them in - full
+    // history was already loaded once below, right after the initial join.
+    const resumeChatHistory = async () => {
+      const missed = await chatClient.loadHistory(lastMessageIdRef.current);
+      if (missed.length === 0) {
+        return;
+      }
+
+      lastMessageIdRef.current = missed[missed.length - 1].id;
+      setMessages((prev) => {
+        const seen = new Set(prev.map((m) => m.id));
+        const fresh = missed.filter((m) => !seen.has(m.id));
+        return fresh.length > 0 ? [...prev, ...fresh] : prev;
+      });
+    };
+
+    const handleRejoined = (existingPeers: PeerInfo[]) => {
+      resetPeers(existingPeers);
+      void applyMuteState(client);
+      void resumeChatHistory().catch((err) => console.error("Failed to refresh chat history after rejoin:", err));
+    };
 
     const client = new RoomClient(signalingSocket, roomId, displayName, {
       onPeerJoined: (peer: PeerInfo) => upsertPeer(peer.id, { displayName: peer.displayName }),
@@ -144,6 +196,7 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
         upsertPeer(peerId, kind === "video" ? { videoMuted: false } : { audioMuted: false });
       },
       onConnectionStateChange: setStatus,
+      onRejoined: handleRejoined,
     });
     clientRef.current = client;
 
@@ -153,16 +206,13 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
         video: localStreamRef.current.getVideoTracks()[0],
       });
 
-      if (!isMicOn) {
-        await client.pauseProducer("audio");
-      }
-      if (!isCamOn) {
-        await client.pauseProducer("video");
-      }
-
+      await applyMuteState(client);
       existingPeers.forEach((peer) => upsertPeer(peer.id, { displayName: peer.displayName }));
 
       const history = await chatClient.loadHistory();
+      if (history.length > 0) {
+        lastMessageIdRef.current = history[history.length - 1].id;
+      }
       setMessages(history);
     } catch (err) {
       clientRef.current = null;
@@ -176,11 +226,7 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
   };
 
   const leave = () => {
-    clientRef.current?.close();
-    clientRef.current = null;
-    chatClientRef.current = null;
-    localStreamRef.current?.getTracks().forEach((track) => track.stop());
-    localStreamRef.current = null;
+    teardownConnection();
     setLocalStream(null);
     setMessages([]);
     setPeersById({});
@@ -190,6 +236,7 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
   const toggleMic = () => {
     const next = !isMicOn;
     setIsMicOn(next);
+    isMicOnRef.current = next;
 
     if (clientRef.current) {
       void (next ? clientRef.current.resumeProducer("audio") : clientRef.current.pauseProducer("audio"));
@@ -201,6 +248,7 @@ export function MeetingRoomProvider({ roomId, displayName, children }: MeetingRo
   const toggleCam = () => {
     const next = !isCamOn;
     setIsCamOn(next);
+    isCamOnRef.current = next;
 
     if (clientRef.current) {
       void (next ? clientRef.current.resumeProducer("video") : clientRef.current.pauseProducer("video"));

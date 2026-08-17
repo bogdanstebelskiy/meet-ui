@@ -20,6 +20,9 @@ export class RoomClient {
   >();
   private readonly pendingProducers: ExistingProducerPayload[] = [];
   private closed = false;
+  private hasJoinedOnce = false;
+  private rejoining = false;
+  private tracks: { audio?: MediaStreamTrack; video?: MediaStreamTrack } = {};
 
   constructor(
     private readonly signalingSocket: SignalingSocket<RoomServerToClientEvents, RoomClientToServerEvents>,
@@ -56,32 +59,67 @@ export class RoomClient {
     });
 
     socket.on("connect_error", () => this.handlers.onConnectionStateChange("error"));
+
+    socket.on("connect", () => {
+      if (this.hasJoinedOnce && !this.closed && !this.rejoining) {
+        void this.rejoin();
+      }
+    });
   }
 
   async join(tracks: { audio?: MediaStreamTrack; video?: MediaStreamTrack }): Promise<PeerInfo[]> {
+    this.tracks = tracks;
     this.handlers.onConnectionStateChange("connecting");
 
     await this.signalingSocket.connect();
+    const existingPeers = await this.performHandshake();
 
+    this.hasJoinedOnce = true;
+    this.handlers.onConnectionStateChange("connected");
+    return existingPeers;
+  }
+
+  private async rejoin(): Promise<void> {
+    this.rejoining = true;
+    this.handlers.onConnectionStateChange("connecting");
+
+    // Old transports/producers/consumers are already dead server-side; drop them locally too.
+    this.closeMediaResources();
+
+    try {
+      const existingPeers = await this.performHandshake();
+      this.handlers.onConnectionStateChange("connected");
+      this.handlers.onRejoined(existingPeers);
+    } catch (error) {
+      console.error("Failed to rejoin room:", error);
+      this.handlers.onConnectionStateChange("error");
+    } finally {
+      this.rejoining = false;
+    }
+  }
+
+  private async performHandshake(): Promise<PeerInfo[]> {
     // Must run first - later calls rely on roomId/peerId this sets server-side.
     const { existingPeers } = await this.signalingSocket.request<{ peerId: string; existingPeers: PeerInfo[] }>(
       "join",
       { roomId: this.roomId, displayName: this.displayName },
     );
 
-    const routerRtpCapabilities =
-      await this.signalingSocket.request<mediasoupTypes.RtpCapabilities>("getRouterRtpCapabilities");
-    await this.device.load({ routerRtpCapabilities });
+    if (!this.device.loaded) {
+      const routerRtpCapabilities =
+        await this.signalingSocket.request<mediasoupTypes.RtpCapabilities>("getRouterRtpCapabilities");
+      await this.device.load({ routerRtpCapabilities });
+    }
 
     await this.createSendTransport();
     await this.createRecvTransport();
 
-    if (tracks.audio) {
-      await this.produce("audio", tracks.audio);
+    if (this.tracks.audio) {
+      await this.produce("audio", this.tracks.audio);
     }
 
-    if (tracks.video) {
-      await this.produce("video", tracks.video);
+    if (this.tracks.video) {
+      await this.produce("video", this.tracks.video);
     }
 
     // Drain newProducer events that raced ahead of recvTransport creation.
@@ -90,7 +128,6 @@ export class RoomClient {
       await this.handleNewProducer(payload);
     }
 
-    this.handlers.onConnectionStateChange("connected");
     return existingPeers;
   }
 
@@ -120,11 +157,19 @@ export class RoomClient {
     }
     this.closed = true;
 
+    this.closeMediaResources();
+    this.signalingSocket.raw.disconnect();
+  }
+
+  private closeMediaResources(): void {
     this.producers.forEach((producer) => this.safeClose(producer, `producer ${producer.id}`));
+    this.producers.clear();
     this.consumers.forEach(({ consumer }) => this.safeClose(consumer, `consumer ${consumer.id}`));
+    this.consumers.clear();
     this.safeClose(this.sendTransport, "sendTransport");
     this.safeClose(this.recvTransport, "recvTransport");
-    this.signalingSocket.raw.disconnect();
+    this.sendTransport = undefined;
+    this.recvTransport = undefined;
   }
 
   private safeClose(closeable: { close(): void } | undefined, label: string): void {
@@ -191,7 +236,9 @@ export class RoomClient {
       throw new Error("sendTransport not ready");
     }
 
-    const producer = await this.sendTransport.produce({ track });
+    // stopTracks: false - closing the producer on rejoin must not kill the
+    // underlying track, since join() also reuses it for the local preview.
+    const producer = await this.sendTransport.produce({ track, stopTracks: false });
     this.producers.set(kind, producer);
   }
 

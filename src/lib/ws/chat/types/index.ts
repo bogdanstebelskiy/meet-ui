@@ -16,5 +16,8 @@ export interface ChatServerToClientEvents {
 
 export interface ChatClientToServerEvents {
   sendChatMessage: (p: { roomId: string; body: string }, ack: (r: { ok: true }) => void) => void;
-  getChatHistory: (p: { roomId: string }, ack: (r: { messages: ChatMessage[] }) => void) => void;
+  getChatHistory: (
+    p: { roomId: string; afterId?: string },
+    ack: (r: { messages: ChatMessage[] }) => void,
+  ) => void;
 }

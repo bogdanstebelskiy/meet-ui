@@ -24,6 +24,7 @@ export interface RoomClientHandlers {
   onRemoteProducerPaused(peerId: string, kind: ConsumerKind): void;
   onRemoteProducerResumed(peerId: string, kind: ConsumerKind): void;
   onConnectionStateChange(state: ConnectionState): void;
+  onRejoined(existingPeers: PeerInfo[]): void;
 }
 
 export interface ProducerRef {
