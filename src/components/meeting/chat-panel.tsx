@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useMeetingRoom } from "@/providers/meeting-room-provider";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -20,15 +20,19 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [messages]);
 
-  const handleSend = () => {
+  const sendDraft = () => {
     const body = draft.trim();
 
-    if (!body) {
-      return;
-    }
+    if (!body) return;
 
     setDraft("");
     void sendMessage(body);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      sendDraft();
+    }
   };
 
   return (
@@ -45,18 +49,14 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
             </div>
           ))}
         </div>
-        <SheetFooter className="flex-row border-t border-border p-3">
+        <SheetFooter className="flex-row items-center border-t border-border p-3">
           <Input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSend();
-              }
-            }}
+            onKeyDown={handleKeyDown}
             placeholder="Message"
           />
-          <Button size="sm" onClick={handleSend}>
+          <Button size="sm" onClick={sendDraft}>
             Send
           </Button>
         </SheetFooter>
