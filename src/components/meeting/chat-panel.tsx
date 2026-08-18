@@ -22,9 +22,11 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
 
   const handleSend = () => {
     const body = draft.trim();
+
     if (!body) {
       return;
     }
+
     setDraft("");
     void sendMessage(body);
   };

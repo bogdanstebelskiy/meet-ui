@@ -12,7 +12,7 @@ export function useTileOrder(peers: PeerLike[]) {
   const idsKey = [...currentIds].sort().join(",");
 
   const [order, setOrder] = useState<string[]>([LOCAL_TILE_ID]);
-  const [reconciledKey, setReconciledKey] = useState(idsKey);
+  const [reconciledKey, setReconciledKey] = useState<string | null>(null);
 
   if (idsKey !== reconciledKey) {
     const kept = order.filter((id) => currentIds.has(id));
