@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { move } from "@dnd-kit/helpers";
 import { LOCAL_TILE_ID } from "@/constants/meeting";
+import { reconcileOrder } from "@/helpers/tile-order";
 import type { DragEndEvent } from "@/types/meeting";
 
 interface PeerLike {
@@ -15,15 +16,8 @@ export function useTileOrder(peers: PeerLike[]) {
   const [reconciledKey, setReconciledKey] = useState<string | null>(null);
 
   if (idsKey !== reconciledKey) {
-    const kept = order.filter((id) => currentIds.has(id));
-    const known = new Set(kept);
-    const added = [...currentIds].filter((id) => !known.has(id));
-    let next = [...kept, ...added];
-    if (currentIds.size >= 5) {
-      next = [...next.filter((id) => id !== LOCAL_TILE_ID), LOCAL_TILE_ID];
-    }
     setReconciledKey(idsKey);
-    setOrder(next);
+    setOrder(reconcileOrder(order, currentIds));
   }
 
   const reorder = (event: DragEndEvent) => setOrder((items) => move(items, event));

@@ -2,6 +2,10 @@ import type { Corner } from "@/types/meeting";
 
 export const LOCAL_TILE_ID = "local";
 
+export const PIN_LOCAL_TILE_THRESHOLD = 5;
+
+export const GRID_GAP_PX = 16;
+
 export const CORNER_CLASSES: Record<Corner, string> = {
   "top-left": "top-8 left-8",
   "top-right": "top-8 right-8",

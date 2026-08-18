@@ -1,41 +1,49 @@
 import type { CSSProperties } from "react";
-
-export const GRID_GAP_PX = 16;
+import { GRID_GAP_PX } from "@/constants/meeting";
 
 /**
- * Splits `n` tiles into rows the way Meet's tile view does: pick the fewest rows
- * whose worst-case (widest) row keeps tiles from getting narrower than `minAspect`,
- * then hand any remainder items to the later rows so the last row is the fullest.
+ * Splits tiles into rows using the fewest rows that keep the widest row
+ * above the minimum tile aspect ratio.
  */
-export function computeRowSizes(n: number, width: number, height: number, minAspect = 0.5): number[] {
-  if (n <= 0 || width <= 0 || height <= 0) {
-    return n > 0 ? [n] : [];
+export function computeRowSizes(tileCount: number, width: number, height: number, minAspect = 0.5): number[] {
+  if (tileCount <= 0 || width <= 0 || height <= 0) {
+    return tileCount > 0 ? [tileCount] : [];
   }
 
-  let rows = 1;
-  for (; rows < n; rows++) {
-    const cols = Math.ceil(n / rows);
-    const tileWidth = width / cols;
-    const tileHeight = height / rows;
-    if (tileWidth / tileHeight >= minAspect) {
-      break;
+  const rowCount = findRowCount(tileCount, width, height, minAspect);
+
+  return distributeTiles(tileCount, rowCount);
+}
+
+function findRowCount(tileCount: number, width: number, height: number, minAspect: number): number {
+  for (let rowCount = 1; rowCount <= tileCount; rowCount++) {
+    const columnCount = Math.ceil(tileCount / rowCount);
+    const tileAspect = width / columnCount / (height / rowCount);
+
+    if (tileAspect >= minAspect) {
+      return rowCount;
     }
   }
 
-  const base = Math.floor(n / rows);
-  const remainder = n % rows;
-  return Array.from({ length: rows }, (_, i) => base + (i >= rows - remainder ? 1 : 0));
+  return tileCount;
 }
 
-/** Maps each flat tile index to the row it falls into, given a row-size distribution. */
+function distributeTiles(tileCount: number, rowCount: number): number[] {
+  const baseSize = Math.floor(tileCount / rowCount);
+  const remainder = tileCount % rowCount;
+
+  return Array.from({ length: rowCount }, (_, index) => baseSize + (index >= rowCount - remainder ? 1 : 0));
+}
+
 export function rowOfEachIndex(rowSizes: number[]): number[] {
-  return rowSizes.flatMap((count, rowIndex) => Array(count).fill(rowIndex) as number[]);
+  return rowSizes.flatMap((size, row) => Array(size).fill(row));
 }
 
-/** Width/height for a tile in a row of `rowCount` items, within a grid of `totalRows` rows. */
-export function getTileStyle(rowCount: number, totalRows: number): CSSProperties {
+export function getTileStyle(columnCount: number, rowCount: number): CSSProperties {
   return {
-    width: `calc((100% - ${(rowCount - 1) * GRID_GAP_PX}px) / ${rowCount})`,
-    height: `calc((100% - ${(totalRows - 1) * GRID_GAP_PX}px) / ${totalRows})`,
+    width: getTrackSize(columnCount),
+    height: getTrackSize(rowCount),
   };
 }
+
+const getTrackSize = (count: number) => `calc((100% - ${(count - 1) * GRID_GAP_PX}px) / ${count})`;

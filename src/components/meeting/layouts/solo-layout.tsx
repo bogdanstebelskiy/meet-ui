@@ -1,11 +1,11 @@
 "use client";
 
-import { LocalTile } from "@/components/meeting/tiles/local-tile";
+import type { ReactNode } from "react";
 
-export function SoloLayout({ stream, isCamOn }: { stream: MediaStream | null; isCamOn: boolean }) {
-  return (
-    <div className="flex flex-1 overflow-hidden p-4">
-      <LocalTile stream={stream} isCamOn={isCamOn} />
-    </div>
-  );
+interface SoloLayoutProps {
+  localTile: ReactNode;
+}
+
+export function SoloLayout({ localTile }: SoloLayoutProps) {
+  return <div className="flex flex-1 overflow-hidden p-4">{localTile}</div>;
 }

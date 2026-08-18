@@ -19,22 +19,23 @@ export default function MeetingRoom() {
   const { order, reorder } = useTileOrder(peers);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  const tilesById = new Map<string, ReactNode>([
-    [LOCAL_TILE_ID, <LocalTile key={LOCAL_TILE_ID} stream={localStream} isCamOn={isCamOn} />],
-    ...peers.map(
-      (peer) =>
-        [
-          peer.peerId,
-          <PeerTile
-            key={peer.peerId}
-            displayName={peer.displayName}
-            videoTrack={peer.videoTrack}
-            audioTrack={peer.audioTrack}
-            videoMuted={peer.videoMuted}
-          />,
-        ] as const,
-    ),
-  ]);
+  const localTile = <LocalTile key={LOCAL_TILE_ID} stream={localStream} isCamOn={isCamOn} />;
+
+  const tilesById = new Map<string, ReactNode>();
+
+  tilesById.set(LOCAL_TILE_ID, localTile);
+  peers.forEach((peer) => {
+    tilesById.set(
+      peer.peerId,
+      <PeerTile
+        key={peer.peerId}
+        displayName={peer.displayName}
+        videoTrack={peer.videoTrack}
+        audioTrack={peer.audioTrack}
+        videoMuted={peer.videoMuted}
+      />,
+    );
+  });
 
   const handleLeave = () => {
     leave();
@@ -46,9 +47,9 @@ export default function MeetingRoom() {
   return (
     <section className="relative flex h-screen w-full overflow-hidden">
       <div className="flex flex-1 flex-col overflow-hidden">
-        {totalTiles === 1 && <SoloLayout stream={localStream} isCamOn={isCamOn} />}
-        {totalTiles === 2 && <DuoLayout localStream={localStream} isCamOn={isCamOn} peer={peers[0]} />}
-        {totalTiles > 2 && <GridLayout order={order} tilesById={tilesById} onReorder={reorder} />}
+        {totalTiles === 1 && <SoloLayout localTile={localTile} />}
+        {totalTiles === 2 && <DuoLayout localTile={localTile} peerTile={tilesById.get(peers[0].peerId)} />}
+        {totalTiles > 2 && <GridLayout order={order} onReorder={reorder} tilesById={tilesById} />}
 
         <CallControls
           isMicOn={isMicOn}

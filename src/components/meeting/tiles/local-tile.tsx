@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
-export function LocalTile({ stream, isCamOn }: { stream: MediaStream | null; isCamOn: boolean }) {
+interface LocalTileProps {
+  stream: MediaStream | null;
+  isCamOn: boolean;
+}
+
+export function LocalTile({ stream, isCamOn }: LocalTileProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
