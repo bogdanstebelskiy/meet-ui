@@ -13,11 +13,12 @@ import { useMediaDevices } from "@/hooks/use-media-devices";
 
 export default function SettingsDialog() {
   const [activeTab, setActiveTab] = useState("audio");
+  const [open, setOpen] = useState(false);
 
-  const { availableMicrophones, availableSpeakers, availableCameras, isLoadingDevices } = useMediaDevices();
+  const { availableMicrophones, availableSpeakers, availableCameras, isLoadingDevices } = useMediaDevices(open);
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" aria-controls="dialog">
           <Settings className="size-6" />

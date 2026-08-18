@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-export const useMediaDevices = () => {
+export const useMediaDevices = (enabled: boolean) => {
   const [availableMicrophones, setAvailableMicrophones] = useState<MediaDeviceInfo[]>([]);
   const [availableSpeakers, setAvailableSpeakers] = useState<MediaDeviceInfo[]>([]);
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
@@ -42,6 +42,10 @@ export const useMediaDevices = () => {
   };
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     refreshDevices().then();
 
     navigator.mediaDevices.addEventListener("devicechange", refreshDevices);
@@ -49,7 +53,7 @@ export const useMediaDevices = () => {
     return () => {
       navigator.mediaDevices.removeEventListener("devicechange", refreshDevices);
     };
-  }, []);
+  }, [enabled]);
 
   return {
     availableMicrophones,
