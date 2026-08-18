@@ -18,6 +18,7 @@ interface AudioSettings {
 interface VideoSettings {
   camera: MediaDeviceInfo | undefined;
   resolution: string;
+  mirrorCamera: boolean;
 }
 
 interface GeneralSettings {
@@ -62,6 +63,7 @@ export const loadVideoSettingsFromStorage = () =>
   loadFromStorage<VideoSettings>(STORAGE_KEYS.VIDEO, {
     camera: undefined,
     resolution: "720p",
+    mirrorCamera: true,
   });
 
 export const loadGeneralSettingsFromStorage = () =>
